@@ -1,0 +1,125 @@
+================================================================================
+EXPERIMENT 002: SAFETIES VS CORNERBACKS IN INTERCEPTION SCENARIOS
+================================================================================
+
+Created: 2025-11-05
+Status: Ready to Execute
+
+OBJECTIVE
+---------
+Compare safeties (SS, FS, S) and cornerbacks (CB) in interception scenarios,
+analyzing their pre-throw positioning, movement, speed, acceleration, and
+directional alignment.
+
+STRUCTURE
+---------
+experiments/exp_002_safeties_vs_cornerbacks/
+├── README.md                          # Complete documentation
+├── QUICKSTART.md                      # Quick start guide
+├── hypothesis.md                      # Formal hypotheses (H1-H5)
+├── config.yaml                        # All configuration parameters
+├── analysis.py                        # Main statistical analysis
+├── test_setup.py                      # Setup verification script
+├── scripts/
+│   ├── load_and_merge_data.py        # Step 1: Data loading
+│   └── engineer_features.py          # Step 2: Feature engineering
+├── results/                           # Analysis outputs (created on run)
+│   └── figures/                       # Visualizations
+└── logs/                              # Execution logs
+
+EXECUTION STEPS
+---------------
+1. Verify setup:
+   python test_setup.py
+
+2. Load and merge data (5-10 min):
+   python scripts/load_and_merge_data.py
+
+3. Engineer features (2-5 min):
+   python scripts/engineer_features.py
+
+4. Run analysis (< 1 min):
+   python analysis.py
+
+Or run all at once:
+   python scripts/load_and_merge_data.py && \
+   python scripts/engineer_features.py && \
+   python analysis.py
+
+HYPOTHESES TESTED
+-----------------
+H1: Positioning - Safeties are farther from ball than CBs (one-tailed t-test)
+H2: Alignment - Directional alignment differs between groups (two-tailed t-test)
+H3: Speed - CBs have higher speed than safeties (one-tailed t-test)
+H4: Coverage - Coverage scheme affects position involvement (chi-square/logistic)
+H5: Predictors - Different features predict success per position (logistic w/ interactions)
+
+FEATURES ENGINEERED
+-------------------
+Spatial: initial_dist_to_ball, min_dist_to_ball, dist_from_los
+Kinematic: avg_speed, max_speed, speed_at_throw, avg_accel, max_accel
+Directional: avg_dir_alignment, avg_orient_alignment, avg_body_control
+Temporal: avg_closing_rate, reaction_frame_min
+Post-throw: post_throw_distance, final_proximity_to_ball, convergence_distance
+
+OUTPUT FILES
+------------
+results/statistics.json                # All test results
+results/figures/distance_comparison.png
+results/figures/speed_comparison.png
+results/figures/alignment_comparison.png
+logs/YYYY-MM-DD_HH-MM-SS_run.log
+
+DATA REQUIREMENTS
+-----------------
+Input: data/raw/train/input_2023_wXX.csv (all weeks)
+Output: data/raw/train/output_2023_wXX.csv (all weeks)
+Supplementary: data/raw/supplementary_data.csv
+
+Interim: data/interim/merged_tracking_data.csv (created by step 1)
+Interim: data/interim/engineered_features.csv (created by step 2)
+
+STATISTICAL APPROACH
+--------------------
+- Significance level: α = 0.01 (Bonferroni corrected for 5 tests)
+- Effect size: Cohen's d (small=0.2, medium=0.5, large=0.8)
+- Assumptions: Checked via Shapiro-Wilk, Levene's test
+- Alternative tests: Welch's t-test if variances unequal
+
+CUSTOMIZATION
+-------------
+Edit config.yaml to modify:
+- Weeks to process
+- Statistical parameters (alpha, effect size thresholds)
+- Feature calculation parameters
+- Visualization settings
+- Output paths
+
+KEY REFERENCES
+--------------
+- Strategy document: docs/analysis_strategy_safeties_vs_cornerbacks.md
+- README: README.md (comprehensive documentation)
+- Quick start: QUICKSTART.md (rapid execution guide)
+- Configuration: config.yaml (all parameters)
+
+EXPECTED RESULTS
+----------------
+Based on domain knowledge:
+- H1: SUPPORTED - Safeties play deeper (large effect)
+- H2: UNCERTAIN - Could go either way
+- H3: SUPPORTED - CBs are faster (medium effect)
+- H4: SUPPORTED - Coverage matters
+- H5: SUPPORTED - Different success factors
+
+TROUBLESHOOTING
+---------------
+- Missing files: Check data/raw/ directory has all CSV files
+- Module errors: pip install -r ../../requirements.txt
+- Memory issues: Reduce weeks in config.yaml
+- No results: Check logs/ for detailed error messages
+
+CONTACT
+-------
+For questions, review README.md or check execution logs in logs/ directory.
+
+================================================================================

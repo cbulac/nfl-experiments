@@ -1,0 +1,205 @@
+# Experiment Configuration: Help Defenders vs Primary Defenders
+experiment:
+  name: "exp_003_help_vs_primary_defenders"
+  version: "1.0"
+  date: "2025-11-06"
+  author: "Your Name"
+  description: "Test whether help defenders have higher interception success rates than primary defenders"
+
+# Data configuration
+data:
+  # Use engineered features from exp_002
+  input_file: "../../data/interim/engineered_features.csv"
+
+  # Output paths
+  processed_dir: "../../data/processed/"
+  output_file: "../../data/processed/help_vs_primary_defenders.csv"
+
+# Defender type classification
+defender_classification:
+  # Primary method: proximity-based ranking
+  method: "proximity_rank"  # Options: "proximity_rank", "distance_threshold", "hybrid"
+
+  # Proximity rank method (primary approach)
+  proximity_rank:
+    # Player with rank 1 (closest) is primary defender
+    primary_rank: 1
+    # All other ranks are help defenders
+    help_ranks: [2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+  # Distance threshold method (validation)
+  distance_threshold:
+    primary_max_distance: 5.0  # yards
+    help_min_distance: 5.0     # yards
+
+  # Hybrid: combine both methods
+  hybrid:
+    use_rank_as_primary: true
+    validate_with_distance: true
+    max_distance_for_primary: 10.0  # Max distance for rank 1 to be considered primary
+
+# Interception identification
+interception_identification:
+  # Method to identify which player made the interception
+  method: "player_to_predict"  # Options: "player_to_predict", "final_proximity", "both"
+
+  # If using final_proximity method
+  final_proximity:
+    use_closest_player: true
+    max_distance_for_int: 3.0  # yards (must be within 3y of ball to claim INT)
+
+  # Validation: cross-check both methods if available
+  validate_methods: true
+
+# Analysis parameters
+analysis:
+  # Statistical tests
+  statistical_tests:
+    alpha: 0.05
+    confidence_level: 0.95
+
+  # Primary hypothesis (H1)
+  h1_interception_rate:
+    test_type: "chi_square"  # or "proportion_test"
+    alternative: "greater"  # help > primary
+    calculate_odds_ratio: true
+    calculate_relative_risk: true
+
+  # Secondary hypotheses
+  h2_proximity:
+    test_type: "t-test"
+    alternative: "less"  # primary < help (primary closer)
+    metric: "initial_dist_to_ball"
+
+  h3_speed:
+    test_type: "t-test"
+    alternative: "two-sided"
+    metric: "avg_speed"
+    filter_successful_only: true  # Only players who made INT
+
+  h4_angle:
+    test_type: "t-test"
+    alternative: "less"  # help < primary (help has better alignment)
+    metric: "avg_dir_alignment"
+    filter_successful_only: true
+
+  h5_interaction:
+    test_type: "logistic_regression"
+    include_interaction: true
+    formula: "made_interception ~ defender_type * position_group + controls"
+
+# Control variables
+control_variables:
+  include_in_models: true
+  variables:
+    - "position_group"
+    - "team_coverage_type"
+    - "pass_length"
+    - "down"
+    - "avg_speed"
+
+# Stratification for subgroup analysis
+stratification:
+  perform_stratified_analysis: true
+
+  stratify_by:
+    - "position_group"  # Separate analysis for CBs and Ss
+    - "team_coverage_man_zone"  # Separate for man and zone
+    - "pass_length_category"  # Short, medium, deep
+
+  pass_length_categories:
+    short: [0, 10]
+    medium: [10, 20]
+    deep: [20, 100]
+
+# Sensitivity analysis
+sensitivity_analysis:
+  perform: true
+
+  # Vary proximity rank threshold
+  proximity_rank_variations: [1, 2]  # Try top 1 or top 2 as primary
+
+  # Vary distance threshold
+  distance_threshold_variations: [3, 5, 7, 10]  # yards
+
+  # Minimum sample size for subgroups
+  min_sample_size: 50
+
+# Multivariate modeling
+models:
+  logistic_regression:
+    solver: "lbfgs"
+    max_iter: 1000
+    class_weight: null  # or "balanced"
+
+  # Model specifications
+  baseline_model: "made_interception ~ defender_type"
+  adjusted_model: "made_interception ~ defender_type + position_group + team_coverage_type + pass_length + avg_speed"
+  interaction_model: "made_interception ~ defender_type * position_group + controls"
+
+  # Validation
+  train_test_split: 0.80
+  cross_validation_folds: 5
+  random_state: 42
+
+# Visualization settings
+visualization:
+  figure_format: "png"
+  dpi: 300
+  style: "whitegrid"
+
+  # Colors
+  defender_type_colors:
+    primary: "#E63946"   # Red
+    help: "#06AED5"      # Cyan
+
+  figure_sizes:
+    bar_plot: [10, 6]
+    comparison_plot: [12, 5]
+    multi_panel: [15, 10]
+    contingency_heatmap: [8, 6]
+
+  # Figures to generate
+  figure_names:
+    interception_rates: "interception_rates_by_defender_type.png"
+    proximity_comparison: "proximity_comparison.png"
+    speed_comparison: "speed_comparison_successful_ints.png"
+    angle_comparison: "angle_comparison_successful_ints.png"
+    position_interaction: "position_group_interaction.png"
+    coverage_stratified: "coverage_type_stratified.png"
+    contingency_heatmap: "contingency_table_heatmap.png"
+    odds_ratio_forest: "odds_ratio_forest_plot.png"
+
+# Output settings
+output:
+  results_dir: "results/"
+  figures_dir: "results/figures/"
+  log_dir: "logs/"
+
+  # Save detailed results
+  save_contingency_tables: true
+  save_stratified_results: true
+  save_model_coefficients: true
+  save_predictions: false  # Don't save individual predictions
+
+  # File names
+  statistics_file: "results/statistics.json"
+  contingency_tables_file: "results/contingency_tables.csv"
+  stratified_results_file: "results/stratified_analysis.csv"
+  model_results_file: "results/model_results.json"
+
+# Reporting
+reporting:
+  generate_summary: true
+  include_coaching_insights: true
+
+  # Summary statistics to report
+  summary_stats:
+    - "sample_sizes"
+    - "interception_rates"
+    - "odds_ratios"
+    - "effect_sizes"
+    - "confidence_intervals"
+
+# Reproducibility
+random_seed: 42
